@@ -1,0 +1,34 @@
+# Configuração de lojas para o PriceHawk
+# Cada loja define seletores CSS para extrair preço, nome e disponibilidade
+
+stores:
+  - name: "FakeStore API"
+    base_url: "https://fakestoreapi.com"
+    price_selector: "price"
+    name_selector: "title"
+    availability_selector: ""
+    products:
+      - external_id: "1"
+        url: "https://fakestoreapi.com/products/1"
+      - external_id: "2"
+        url: "https://fakestoreapi.com/products/2"
+      - external_id: "3"
+        url: "https://fakestoreapi.com/products/3"
+
+  - name: "Books to Scrape"
+    base_url: "https://books.toscrape.com"
+    price_selector: ".price_color"
+    name_selector: "h1"
+    availability_selector: ".availability"
+    products:
+      - external_id: "catalogue/a-light-in-the-attic_1000/index.html"
+        url: "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
+      - external_id: "catalogue/tipping-the-velvet_999/index.html"
+        url: "https://books.toscrape.com/catalogue/tipping-the-velvet_999/index.html"
+      - external_id: "catalogue/soumission_998/index.html"
+        url: "https://books.toscrape.com/catalogue/soumission_998/index.html"
+
+# Configurações de alerta
+alerts:
+  drop_threshold_percentage: 10.0  # Alerta quando preço cai 10% ou mais
+  check_interval_minutes: 60

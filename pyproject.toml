@@ -1,0 +1,63 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pricehawk"
+version = "0.1.0"
+description = "Monitor de preços white-label com alertas (Telegram e Discord)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Erick Eloy" }]
+keywords = ["price-monitor", "scraper", "white-label", "apscheduler", "telegram", "discord"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+    "apscheduler>=3.10.4",
+    "beautifulsoup4>=4.12.3",
+    "pydantic>=2.9.2",
+    "pydantic-settings>=2.6.1",
+    "pyyaml>=6.0.1",
+    "requests>=2.32.3",
+    "sqlalchemy>=2.0.36",
+    "python-telegram-bot>=21.10",
+    "httpx>=0.27.0",
+    "aiohttp>=3.11.0",
+    "colorlog>=6.12.0",
+    "typer>=0.12.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.3",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.6.9",
+    "responses>=0.25.3",
+    "vcrpy>=7.0.0",
+]
+
+[project.scripts]
+pricehawk = "pricehawk.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["pricehawk*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "C4"]
