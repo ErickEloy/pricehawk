@@ -1,0 +1,40 @@
+"""Compõe os serviços docker."""
+version: '3.8'
+
+services:
+  pricehawk-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pricehawk-api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:///pricehawk.db
+      - LOG_LEVEL=INFO
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
+    volumes:
+      - ./pricehawk.db:/app/pricehawk.db
+      - ./config:/app/config
+    ports:
+      - "8000:8000"
+    command: python -m pricehawk.cli daemon
+
+  pricehawk-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.frontend
+    container_name: pricehawk-frontend
+    restart: unless-stopped
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - APP_NAME=${APP_NAME}
+      - BRAND_COLOR=${BRAND_COLOR}
+      - PRIMARY_COLOR=${PRIMARY_COLOR}
+      - SECONDARY_COLOR=${SECONDARY_COLOR}
+      - CURRENCY_SYMBOL=${CURRENCY_SYMBOL}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - pricehawk-api

@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 
 from pricehawk.database import Store, Product, PriceHistory, get_session, init_db
 from pricehawk.config import settings
+from pricehawk.alerts import PriceDropAlert
 
 logger = logging.getLogger(__name__)
 
@@ -272,6 +273,7 @@ def create_alert(session, product: Product, old_price: float, new_price: float, 
 
 def run_check(config_path: Path, dry_run: bool = False) -> None:
     """Executa verificação de preços para todas as lojas configuradas."""
+    import asyncio
     init_db()
 
     stores_config = load_stores_config(config_path)
@@ -284,6 +286,8 @@ def run_check(config_path: Path, dry_run: bool = False) -> None:
             threshold = data["alerts"].get("drop_threshold_percentage", 10.0)
 
     logger.info(f"Iniciando verificação de {len(stores_config)} lojas (threshold: {threshold}%)")
+
+    price_alert = PriceDropAlert()
 
     with get_session() as session:
         for store_config in stores_config:
@@ -304,14 +308,30 @@ def run_check(config_path: Path, dry_run: bool = False) -> None:
                 product = upsert_product(session, store, product_config, scraped)
 
                 # Verifica queda de preço
+                old_price = None
                 if not dry_run:
-                    if check_price_drop(session, product, scraped.price, threshold):
-                        # Busca preço anterior para criar alerta
-                        last_history = session.query(PriceHistory).filter(
-                            PriceHistory.product_id == product.id
-                        ).order_by(PriceHistory.checked_at.desc()).first()
-                        if last_history:
-                            create_alert(session, product, last_history.price, scraped.price, threshold)
+                    last_history = session.query(PriceHistory).filter(
+                        PriceHistory.product_id == product.id
+                    ).order_by(PriceHistory.checked_at.desc()).first()
+
+                    if last_history:
+                        old_price = last_history.price
+                        if old_price > 0:
+                            drop_percentage = ((old_price - scraped.price) / old_price) * 100
+                            if drop_percentage >= threshold:
+                                # Cria alerta no banco
+                                create_alert(session, product, old_price, scraped.price, threshold)
+
+                                # Envia notificação async
+                                asyncio.run(price_alert.send_price_drop_alert(
+                                    store_name=store.name,
+                                    product_name=product.name,
+                                    product_url=product.url,
+                                    old_price=old_price,
+                                    new_price=scraped.price,
+                                    drop_percentage=drop_percentage,
+                                    currency=scraped.currency
+                                ))
 
                 # Salva histórico
                 if not dry_run:
